@@ -1,0 +1,2 @@
+#define SECRET_APPEUI "70B3D57xxxxxxxxx"
+#define SECRET_APPKEY "0D48A8093C5B9CFD905A065xxxxxxxxx"
