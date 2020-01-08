@@ -10,7 +10,7 @@
 AltSoftSerial loraSerial;
 I2CSoilMoistureSensor sensor;
 
-// Set your AppEUI and AppKey
+// Set your AppEUI and AppKey in secrets.h, found on TTN console device details
 const char *appEui = SECRET_APPEUI;
 const char *appKey = SECRET_APPKEY;
 #define SLEEP_PERIOD 10000
@@ -27,22 +27,13 @@ TheThingsNetwork ttn(loraSerial, debugSerial, freqPlan);
 void setup()
 {
   unsigned char pinNumber;
-  for (pinNumber = 0; pinNumber < 23; pinNumber++)
+  for (pinNumber = 0; pinNumber < 19; pinNumber++)
   {
-  pinMode(pinNumber, INPUT_PULLUP);
-  }
-
-  for (pinNumber = 32; pinNumber < 42; pinNumber++)
-  {
-  pinMode(pinNumber, INPUT_PULLUP);
+    pinMode(pinNumber, INPUT_PULLUP);
   }
 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
-  pinMode(25, INPUT_PULLUP);
-  pinMode(26, INPUT_PULLUP);
-
-  //pinMode(2, INPUT);
   pinMode(RN2483_RESET_PIN, OUTPUT);
   
   // Reset RN2483/RN2903 for a clean power up
@@ -61,7 +52,7 @@ void setup()
   ttn.reset();
   ttn.showStatus();
   #ifdef DEBUG
-  debugSerial.println(F("-- JOIN"));
+  debugSerial.println("-- JOIN");
   #endif
   ttn.join(appEui, appKey);
 }
@@ -88,10 +79,17 @@ void loop()
   // Convert to volts
   batteryVoltage = adcReading * (3.3 / 1024.0);
   
+  #ifdef DEBUG
+  debugSerial.println(F("Sensor begin"));
+  #endif
   sensor.begin(true); // reset sensor
   uint16_t capacitance = sensor.getCapacitance();
   int16_t tempc1 = sensor.getTemperature();
   sensor.sleep();
+  #ifdef DEBUG
+  debugSerial.println(F("Sensor sleep"));
+  #endif
+
   //uint16_t voltage = GetVoltage();
   // Pack float into int with 2 decimal point resolution
   voltage = batteryVoltage * 1000;
@@ -112,7 +110,7 @@ void loop()
   #endif
   
   // Send & sleep
-  ttn.sendBytes(payload, sizeof(payload));
+  //ttn.sendBytes(payload, sizeof(payload));
   ttn.sleep(SLEEP_PERIOD);
   
   // Ensure all debugging message are sent before sleep
