@@ -37,6 +37,8 @@ void setup()
   pinMode(pinNumber, INPUT_PULLUP);
   }
 
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
   pinMode(25, INPUT_PULLUP);
   pinMode(26, INPUT_PULLUP);
 
@@ -50,7 +52,6 @@ void setup()
   
   loraSerial.begin(BAUD_RATE_LORA);
   debugSerial.begin(BAUD_RATE_DEBUG);
-  debugSerial.println(F("-- STATUS"));
   
   Wire.begin();
   sensor.sleep();
@@ -59,7 +60,9 @@ void setup()
   // default 57600 bps (autobaud process is called within reset())
   ttn.reset();
   ttn.showStatus();
+  #ifdef DEBUG
   debugSerial.println(F("-- JOIN"));
+  #endif
   ttn.join(appEui, appKey);
 }
 
@@ -84,11 +87,6 @@ void loop()
   adcReading = adcReading/10;
   // Convert to volts
   batteryVoltage = adcReading * (3.3 / 1024.0);
-  
-  #ifdef DEBUG
-  debugSerial.print(F("Battery: "));
-  debugSerial.print(batteryVoltage);
-  debugSerial.println(F(" V"));
   
   sensor.begin(true); // reset sensor
   uint16_t capacitance = sensor.getCapacitance();
