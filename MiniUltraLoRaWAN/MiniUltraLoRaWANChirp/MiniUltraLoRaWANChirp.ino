@@ -16,6 +16,7 @@ const char *appKey = SECRET_APPKEY;
 #define SLEEP_PERIOD 10000
 #define BAUD_RATE_LORA 19200
 #define BAUD_RATE_DEBUG 115200
+#define RN2483_RESET_PIN 4
 #define debugSerial Serial
 
 // Replace REPLACE_ME with TTN_FP_EU868 or TTN_FP_US915
@@ -25,14 +26,27 @@ TheThingsNetwork ttn(loraSerial, debugSerial, freqPlan);
 
 void setup()
 {
-  pinMode(2, INPUT);
-  pinMode(4, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
+  unsigned char pinNumber;
+  for (pinNumber = 0; pinNumber < 23; pinNumber++)
+  {
+  pinMode(pinNumber, INPUT_PULLUP);
+  }
+
+  for (pinNumber = 32; pinNumber < 42; pinNumber++)
+  {
+  pinMode(pinNumber, INPUT_PULLUP);
+  }
+
+  pinMode(25, INPUT_PULLUP);
+  pinMode(26, INPUT_PULLUP);
+
+  //pinMode(2, INPUT);
+  pinMode(RN2483_RESET_PIN, OUTPUT);
   
   // Reset RN2483/RN2903 for a clean power up
-  digitalWrite(4, LOW);
+  digitalWrite(RN2483_RESET_PIN, LOW);
   delay(500);
-  digitalWrite(4, HIGH);
+  digitalWrite(RN2483_RESET_PIN, HIGH);
   
   loraSerial.begin(BAUD_RATE_LORA);
   debugSerial.begin(BAUD_RATE_DEBUG);
@@ -57,7 +71,6 @@ void loop()
   int adcReading;
   int voltage;
 
-  digitalWrite(LED_BUILTIN, HIGH);
   debugSerial.println(F("-- LOOP"));
   
   // Discard first inaccurate reading
@@ -72,6 +85,7 @@ void loop()
   // Convert to volts
   batteryVoltage = adcReading * (3.3 / 1024.0);
   
+  #ifdef DEBUG
   debugSerial.print(F("Battery: "));
   debugSerial.print(batteryVoltage);
   debugSerial.println(F(" V"));
@@ -90,14 +104,13 @@ void loop()
   payload[4] = tempc1 >> 8;
   payload[5] = tempc1;
   
-  digitalWrite(LED_BUILTIN, LOW);
   #ifdef DEBUG
-  Serial.print(F("Capacitance: "));
-  Serial.println(capacitance);
-  Serial.print(F("Temperature: "));
-  Serial.println(tempc1);
-  Serial.print(F("Voltage: "));
-  Serial.println((int)voltage);
+  debugSerial.print(F("Capacitance: "));
+  debugSerial.println(capacitance);
+  debugSerial.print(F("Temperature: "));
+  debugSerial.println(tempc1);
+  debugSerial.print(F("Voltage: "));
+  debugSerial.println((int)voltage);
   #endif
   
   // Send & sleep
