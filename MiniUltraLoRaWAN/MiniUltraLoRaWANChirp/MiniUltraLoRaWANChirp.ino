@@ -1,14 +1,19 @@
+#define DEBUG
+
 #include "secrets.h"
 #include <TheThingsNetwork.h>
 #include <AltSoftSerial.h>
 #include <LowPower.h>
+#include <I2CSoilMoistureSensor.h>
+#include <Wire.h>
 
 AltSoftSerial loraSerial;
+I2CSoilMoistureSensor sensor;
 
 // Set your AppEUI and AppKey
 const char *appEui = SECRET_APPEUI;
 const char *appKey = SECRET_APPKEY;
-#define SLEEP_PERIOD 30000
+#define SLEEP_PERIOD 10000
 #define BAUD_RATE_LORA 19200
 #define BAUD_RATE_DEBUG 115200
 #define debugSerial Serial
@@ -33,6 +38,9 @@ void setup()
   debugSerial.begin(BAUD_RATE_DEBUG);
   debugSerial.println(F("-- STATUS"));
   
+  Wire.begin();
+  sensor.sleep();
+
   // Reset is required to autobaud RN2483 into 19200 bps from the
   // default 57600 bps (autobaud process is called within reset())
   ttn.reset();
@@ -68,15 +76,29 @@ void loop()
   debugSerial.print(batteryVoltage);
   debugSerial.println(F(" V"));
   
-  payload[0] = 0;
-  payload[1] = 0;
-  payload[2] = 0;
-  payload[3] = 0;
+  sensor.begin(true); // reset sensor
+  uint16_t capacitance = sensor.getCapacitance();
+  int16_t tempc1 = sensor.getTemperature();
+  sensor.sleep();
+  //uint16_t voltage = GetVoltage();
   // Pack float into int with 2 decimal point resolution
-  voltage = batteryVoltage * 100;
-  payload[4] = voltage >> 8;
-  payload[5] = voltage;
+  voltage = batteryVoltage * 1000;
+  payload[0] = voltage >> 8;
+  payload[1] = voltage;
+  payload[2] = capacitance >> 8;
+  payload[3] = capacitance;
+  payload[4] = tempc1 >> 8;
+  payload[5] = tempc1;
+  
   digitalWrite(LED_BUILTIN, LOW);
+  #ifdef DEBUG
+  Serial.print(F("Capacitance: "));
+  Serial.println(capacitance);
+  Serial.print(F("Temperature: "));
+  Serial.println(tempc1);
+  Serial.print(F("Voltage: "));
+  Serial.println((int)voltage);
+  #endif
   
   // Send & sleep
   ttn.sendBytes(payload, sizeof(payload));
