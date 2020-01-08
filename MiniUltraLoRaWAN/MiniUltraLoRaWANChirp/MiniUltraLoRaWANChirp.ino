@@ -8,7 +8,9 @@
 #include <Wire.h>
 
 AltSoftSerial loraSerial;
-I2CSoilMoistureSensor sensor;
+I2CSoilMoistureSensor sensor1(0x20);
+I2CSoilMoistureSensor sensor2(0x21);
+I2CSoilMoistureSensor sensor3(0x22);
 
 // Set your AppEUI and AppKey in secrets.h, found on TTN console device details
 const char *appEui = SECRET_APPEUI;
@@ -26,6 +28,10 @@ TheThingsNetwork ttn(loraSerial, debugSerial, freqPlan);
 
 void setup()
 {
+  #ifdef DEBUG
+  debugSerial.println(F("Setup"));
+  #endif
+
   unsigned char pinNumber;
   for (pinNumber = 0; pinNumber < 19; pinNumber++)
   {
@@ -45,7 +51,9 @@ void setup()
   debugSerial.begin(BAUD_RATE_DEBUG);
   
   Wire.begin();
-  sensor.sleep();
+  sensor1.sleep();
+  sensor2.sleep();
+  sensor3.sleep();
 
   // Reset is required to autobaud RN2483 into 19200 bps from the
   // default 57600 bps (autobaud process is called within reset())
@@ -59,8 +67,7 @@ void setup()
 
 void loop()
 {
-  unsigned char payload[6];
-  unsigned char counter;
+  unsigned char payload[10];
   float batteryVoltage;
   int adcReading;
   int voltage;
@@ -71,7 +78,7 @@ void loop()
   adcReading = analogRead(A6);
   adcReading = 0;
   // Perform averaging
-  for (counter = 10; counter > 0; counter--)
+  for (char batCounter = 10; batCounter > 0; batCounter--)
   {
     adcReading += analogRead(A6);
   }
@@ -80,14 +87,34 @@ void loop()
   batteryVoltage = adcReading * (3.3 / 1024.0);
   
   #ifdef DEBUG
-  debugSerial.println(F("Sensor begin"));
+  debugSerial.println(F("Sensor1 begin"));
   #endif
-  sensor.begin(true); // reset sensor
-  uint16_t capacitance = sensor.getCapacitance();
-  int16_t tempc1 = sensor.getTemperature();
-  sensor.sleep();
+  sensor1.begin(true);
+  uint16_t capacitance1 = sensor1.getCapacitance();
+  int16_t tempc1 = sensor1.getTemperature();
+  sensor1.sleep();
   #ifdef DEBUG
-  debugSerial.println(F("Sensor sleep"));
+  debugSerial.println(F("Sensor1 sleep"));
+  #endif
+
+  #ifdef DEBUG
+  debugSerial.println(F("Sensor2 begin"));
+  #endif
+  sensor2.begin(true);
+  uint16_t capacitance2 = sensor2.getCapacitance();
+  sensor2.sleep();
+  #ifdef DEBUG
+  debugSerial.println(F("Sensor2 sleep"));
+  #endif
+
+  #ifdef DEBUG
+  debugSerial.println(F("Sensor3 begin"));
+  #endif
+  sensor3.begin(true);
+  uint16_t capacitance3 = sensor3.getCapacitance();
+  sensor3.sleep();
+  #ifdef DEBUG
+  debugSerial.println(F("Sensor3 sleep"));
   #endif
 
   //uint16_t voltage = GetVoltage();
@@ -95,22 +122,33 @@ void loop()
   voltage = batteryVoltage * 1000;
   payload[0] = voltage >> 8;
   payload[1] = voltage;
-  payload[2] = capacitance >> 8;
-  payload[3] = capacitance;
+  
+  payload[2] = capacitance1 >> 8;
+  payload[3] = capacitance1;
   payload[4] = tempc1 >> 8;
   payload[5] = tempc1;
   
+  payload[6] = capacitance2 >> 8;
+  payload[7] = capacitance2;
+  
+  payload[8] = capacitance3 >> 8;
+  payload[9] = capacitance3;
+  
   #ifdef DEBUG
-  debugSerial.print(F("Capacitance: "));
-  debugSerial.println(capacitance);
-  debugSerial.print(F("Temperature: "));
+  debugSerial.print(F("Capacitance1: "));
+  debugSerial.println(capacitance1);
+  debugSerial.print(F("Temperature1: "));
   debugSerial.println(tempc1);
+  debugSerial.print(F("Capacitance2: "));
+  debugSerial.println(capacitance2);
+  debugSerial.print(F("Capacitance3: "));
+  debugSerial.println(capacitance3);
   debugSerial.print(F("Voltage: "));
   debugSerial.println((int)voltage);
   #endif
   
   // Send & sleep
-  //ttn.sendBytes(payload, sizeof(payload));
+  ttn.sendBytes(payload, sizeof(payload));
   ttn.sleep(SLEEP_PERIOD);
   
   // Ensure all debugging message are sent before sleep
