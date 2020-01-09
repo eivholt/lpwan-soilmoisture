@@ -15,7 +15,7 @@ I2CSoilMoistureSensor sensor3(0x22);
 // Set your AppEUI and AppKey in secrets.h, found on TTN console device details
 const char *appEui = SECRET_APPEUI;
 const char *appKey = SECRET_APPKEY;
-#define SLEEP_PERIOD 10000
+#define SLEEP_PERIOD 30000
 #define BAUD_RATE_LORA 19200
 #define BAUD_RATE_DEBUG 115200
 #define RN2483_RESET_PIN 4
@@ -28,6 +28,8 @@ TheThingsNetwork ttn(loraSerial, debugSerial, freqPlan);
 
 void setup()
 {
+  debugSerial.begin(BAUD_RATE_DEBUG);
+
   #ifdef DEBUG
   debugSerial.println(F("Setup"));
   #endif
@@ -48,7 +50,6 @@ void setup()
   digitalWrite(RN2483_RESET_PIN, HIGH);
   
   loraSerial.begin(BAUD_RATE_LORA);
-  debugSerial.begin(BAUD_RATE_DEBUG);
   
   Wire.begin();
   sensor1.sleep();
