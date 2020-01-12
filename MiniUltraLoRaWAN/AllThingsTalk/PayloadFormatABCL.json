@@ -1,0 +1,58 @@
+{
+    "name": "soilmoisturesensor",
+    "comment": "Sent when lid opens, with battery voltage.",
+    "version": "1.0.0",
+    "sense": [
+      {
+        "asset": "battery",
+        "value": {
+          "byte": 0,
+          "bytelength": 2,
+          "type": "integer",
+          "signed": false
+        },
+        "comment": "Voltage value as millivolts."
+      },
+      {
+        "asset": "tempc1",
+        "value": {
+          "byte": 4,
+          "bytelength": 2,
+          "type": "integer",
+          "signed": true,
+          "calculation": "val/10"
+        },
+        "comment": "Temperature in Celcius."
+      },
+      {
+        "asset": "capacitance1",
+        "value": {
+          "byte": 2,
+          "bytelength": 2,
+          "type": "integer",
+          "signed": false
+        },
+        "comment": "Capacitance 1"
+      },
+      {
+        "asset": "capacitance2",
+        "value": {
+          "byte": 6,
+          "bytelength": 2,
+          "type": "integer",
+          "signed": false
+        },
+        "comment": "Capacitance 2"
+      },
+      {
+        "asset": "capacitance3",
+        "value": {
+          "byte": 8,
+          "bytelength": 2,
+          "type": "integer",
+          "signed": false
+        },
+        "comment": "Capacitance 3"
+      }
+    ]
+  }
