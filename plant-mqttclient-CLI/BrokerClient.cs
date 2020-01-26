@@ -62,9 +62,16 @@ namespace plant_mqttclient_CLI
         {
             var item = $"Timestamp: {DateTime.Now:O} | Topic: {arg.ApplicationMessage.Topic} | Payload: {arg.ApplicationMessage.ConvertPayloadToString()} | QoS: {arg.ApplicationMessage.QualityOfServiceLevel}";
 
-            await m_consoleLogger.AppendMessageAsync(item);
-            await m_logger?.AppendMessageAsync(item);
-            await m_pasteBinLogger?.AppendMessageAsync(arg.ApplicationMessage.ConvertPayloadToString());
+            var loggingStart = DateTime.Now;
+            
+
+            var consoleTask = m_consoleLogger.AppendMessageAsync(item);
+            var fileTask = m_logger?.AppendMessageAsync(item);
+            var pastebinTask = m_pasteBinLogger?.AppendMessageAsync(arg.ApplicationMessage.ConvertPayloadToString());
+
+            await Task.WhenAll(consoleTask, fileTask, pastebinTask);
+
+            await m_consoleLogger.AppendMessageAsync($"Logging completed in {(DateTime.Now - loggingStart).ToString()}");
         }
 
         private async Task OnSubscriberConnected(MqttClientConnectedEventArgs arg)
@@ -79,7 +86,7 @@ namespace plant_mqttclient_CLI
 
         private async Task OnSubscriberDisconnected(MqttClientDisconnectedEventArgs arg)
         {
-            await m_consoleLogger.AppendMessageAsync("Subscriber Disconnected");
+            await m_consoleLogger.AppendMessageAsync($"Subscriber Disconnected: {JsonConvert.SerializeObject(arg)}");
         }
 
         public bool IsConnected { get { return m_mqttClientSubscriber.IsConnected; } }

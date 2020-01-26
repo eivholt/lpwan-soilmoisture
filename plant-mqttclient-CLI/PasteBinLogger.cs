@@ -18,6 +18,7 @@ namespace plant_mqttclient_CLI
         public async Task AppendMessageAsync(string text)
         {
             m_httpClient.DefaultRequestHeaders.Accept.Clear();
+            m_httpClient.DefaultRequestHeaders.Clear();
             m_httpClient.DefaultRequestHeaders.Add("User-Agent", "plant-mqttclient-CLI");
 
             var stringTask = m_httpClient.PostAsync("https://enpisuapwklg.x.pipedream.net/", 
